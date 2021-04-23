@@ -1,6 +1,8 @@
 radio.onReceivedNumber(function (receivedNumber) {
-    LinkStatus = true
-    sistSettAktiv = input.runningTime()
+    if (receivedNumber == 11) {
+        LinkStatus = true
+        sistSettAktiv = input.runningTime()
+    }
     if (receivedNumber == 21) {
         IgniterStatusLP = true
     } else if (receivedNumber == 22) {
@@ -15,7 +17,8 @@ radio.onReceivedNumber(function (receivedNumber) {
 function Rearm () {
     strip.clear()
     strip.show()
-    while (pins.digitalReadPin(DigitalPin.P1) == 1) {
+    while (pins.digitalReadPin(DigitalPin.P1) == 0) {
+        pins.digitalWritePin(DigitalPin.P8, 0)
         basic.showLeds(`
             . . . . .
             . # # # .
@@ -23,7 +26,7 @@ function Rearm () {
             . # # # .
             . . . . .
             `)
-        pins.digitalWritePin(DigitalPin.P8, 0)
+        pins.digitalWritePin(DigitalPin.P8, 1)
         basic.showLeds(`
             . . . . .
             . # # # .
@@ -31,7 +34,6 @@ function Rearm () {
             . # # # .
             . . . . .
             `)
-        pins.digitalWritePin(DigitalPin.P8, 1)
     }
     pins.digitalWritePin(DigitalPin.P8, 0)
     strip.showColor(neopixel.colors(NeoPixelColors.Purple))
@@ -47,7 +49,13 @@ function Rearm () {
 }
 function StatusCheck () {
     SelfStatus = true
-    if (SelfStatus && LinkStatus && IgniterStatusLP && ArmStatusLP) {
+    ArmCheck = pins.digitalReadPin(DigitalPin.P1)
+    if (ArmCheck == 0) {
+        ArmStatus = true
+    } else {
+        ArmStatus = false
+    }
+    if (SelfStatus && LinkStatus && IgniterStatusLP && ArmStatusLP && ArmStatus) {
         Klar = true
         basic.showLeds(`
             # . . . #
@@ -66,6 +74,7 @@ function StatusCheck () {
             # . . . #
             `)
     }
+    NeoPixels()
 }
 function NeoPixels () {
     if (SelfStatus) {
@@ -93,9 +102,11 @@ function NeoPixels () {
     } else {
         strip.setPixelColor(4, neopixel.colors(NeoPixelColors.Red))
     }
+    strip.show()
 }
 function Launch () {
     if (Klar) {
+        BuzzerBlink()
         basic.showLeds(`
             . . # . .
             . # # # .
@@ -104,6 +115,7 @@ function Launch () {
             . . # . .
             `)
         radio.sendNumber(42)
+        Klar = false
         Rearm()
     }
 }
@@ -141,6 +153,7 @@ function Initialize () {
         # . . . #
         # . . . #
         `)
+    strip.showColor(neopixel.colors(NeoPixelColors.Red))
     basic.pause(200)
 }
 function BuzzerBlink () {
@@ -162,8 +175,9 @@ function BuzzerBlink () {
     pins.digitalWritePin(DigitalPin.P13, 0)
     pins.digitalWritePin(DigitalPin.P14, 0)
 }
-let ArmStatus = false
 let Klar = false
+let ArmStatus = false
+let ArmCheck = 0
 let SelfStatus = false
 let ArmStatusLP = false
 let IgniterStatusLP = false
@@ -178,7 +192,7 @@ let oppdateringsfrekvens = 200
 Initialize()
 basic.forever(function () {
     StatusCheck()
-    if (pins.digitalReadPin(DigitalPin.P5) == 1) {
+    if (pins.digitalReadPin(DigitalPin.P5) == 0) {
         strip.showColor(neopixel.colors(NeoPixelColors.Red))
         basic.pause(100)
         StatusCheck()
@@ -193,13 +207,16 @@ basic.forever(function () {
         pins.digitalWritePin(DigitalPin.P13, 0)
         pins.digitalWritePin(DigitalPin.P14, 0)
     }
+    basic.pause(100)
 })
 control.inBackground(function () {
     while (true) {
         radio.sendNumber(11)
         if (input.runningTime() - sistSettAktiv > 3 * oppdateringsfrekvens) {
             LinkStatus = false
+            IgniterStatusLP = false
+            ArmStatusLP = false
         }
+        basic.pause(oppdateringsfrekvens)
     }
-    basic.pause(oppdateringsfrekvens)
 })
