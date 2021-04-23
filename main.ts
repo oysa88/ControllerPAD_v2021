@@ -49,8 +49,7 @@ function Rearm () {
 }
 function StatusCheck () {
     SelfStatus = true
-    ArmCheck = pins.digitalReadPin(DigitalPin.P1)
-    if (ArmCheck == 0) {
+    if (pins.digitalReadPin(DigitalPin.P1) == 0) {
         ArmStatus = true
     } else {
         ArmStatus = false
@@ -177,7 +176,6 @@ function BuzzerBlink () {
 }
 let Klar = false
 let ArmStatus = false
-let ArmCheck = 0
 let SelfStatus = false
 let ArmStatusLP = false
 let IgniterStatusLP = false
