@@ -121,6 +121,8 @@ function Launch () {
 function Initialize () {
     SelfStatus = false
     LinkStatus = false
+    IgniterStatusLP = false
+    ArmStatusLP = false
     ArmStatus = false
     Klar = false
     strip.showColor(neopixel.colors(NeoPixelColors.Purple))
